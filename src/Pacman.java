@@ -1,10 +1,11 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Time;
 import java.util.HashSet;
 import java.util.Random;
 import javax.swing.*;
 
-public class Pacman extends JPanel {
+public class Pacman extends JPanel implements ActionListener , KeyListener {
     class Block{
         int x;
         int y;
@@ -14,6 +15,9 @@ public class Pacman extends JPanel {
 
         int startX;
         int startY;
+        char direction = 'U';
+        int velocityX = 0;
+        int velocityY = 0;
 
         Block(Image image , int x ,int y , int width , int height){
             this.image = image;
@@ -24,6 +28,40 @@ public class Pacman extends JPanel {
             this.startX = x;
             this.startY = y;
         }
+        void updateDirection(char direction){
+            char previousDireaction = this.direction;
+            this.direction = direction;
+            updateVelocity();
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+            for(Block wall : walls){
+                if(collision(this , wall)){
+                    this.x -= this.velocityX;
+                    this.y -= this.velocityY;
+                    this.direction = previousDireaction;
+                    updateVelocity();
+                }
+            }
+        }
+        void updateVelocity(){
+            if(this.direction == 'U') {
+                this.velocityX = 0;
+                this.velocityY = -tileSize / 4;
+            }
+            else if (this.direction == 'D') {
+                this.velocityX = 0;
+                this.velocityY = tileSize / 4;
+            }
+            else if (this.direction == 'L') {
+                this.velocityY = 0;
+                this.velocityX = -tileSize / 4;
+            }
+            else if (this.direction == 'R') {
+                this.velocityY = 0;
+                this.velocityX = tileSize / 4;
+            }
+        }
+
     }
 
     private int rowCount = 21;
@@ -72,9 +110,13 @@ public class Pacman extends JPanel {
     HashSet<Block>ghosts;
     Block pacman;
 
+    Timer gameLoop;
+
     Pacman(){
         setPreferredSize(new Dimension(boardWidth , boardHeight));
         setBackground(Color.BLACK);
+        addKeyListener(this);
+        setFocusable(true);
         wallImage = new ImageIcon(getClass().getResource("./wall.png")).getImage();
 
         blueGhostImage = new ImageIcon(getClass().getResource("./blueGhost.png")).getImage();
@@ -88,6 +130,10 @@ public class Pacman extends JPanel {
         pacmanRightImage = new ImageIcon(getClass().getResource("./pacmanRight.png")).getImage();
 
         loadMap();
+        //how long it takes to start the timer , milliseconds gone between the frames
+        gameLoop = new Timer(50 , this); // 20fps (1000/50)
+        gameLoop.start();
+
         System.out.println(walls.size());
         System.out.println(foods.size());
         System.out.println(ghosts.size());
@@ -156,4 +202,51 @@ public class Pacman extends JPanel {
             g.fillRect(food.x , food.y , food.width , food.height);
         }
     }
+    public void move(){
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
+
+        for(Block wall : walls){
+            if(collision(pacman , wall)){
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+            }
+        }
+    }
+    public boolean collision(Block a , Block b) {
+        return a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y;
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        move();
+        repaint();
+    }
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+    @Override
+    public void keyReleased(KeyEvent e) {
+        //System.out.println("Key Event : " + e.getKeyCode());
+        if(e.getKeyCode() == KeyEvent.VK_UP){
+            pacman.updateDirection('U');
+        }
+        else if(e.getKeyCode() == KeyEvent.VK_DOWN){
+            pacman.updateDirection('D');
+        }
+        else if(e.getKeyCode() == KeyEvent.VK_LEFT){
+            pacman.updateDirection('L');
+        }
+        else if(e.getKeyCode() == KeyEvent.VK_RIGHT){
+            pacman.updateDirection('R');
+        }
+    }
+
 }

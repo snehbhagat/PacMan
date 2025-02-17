@@ -18,6 +18,7 @@ public class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Pacman pacmanGame  = new Pacman();
         frame.add(pacmanGame);
+        pacmanGame.requestFocus();
         frame.pack();
         frame.setVisible(true);
     }
