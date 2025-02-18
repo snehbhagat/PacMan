@@ -112,6 +112,9 @@ public class Pacman extends JPanel implements ActionListener , KeyListener {
 
     Timer gameLoop;
 
+    char [] directions = {'R' , 'U' , 'D' , 'L'};
+    Random random = new Random();
+
     Pacman(){
         setPreferredSize(new Dimension(boardWidth , boardHeight));
         setBackground(Color.BLACK);
@@ -130,6 +133,10 @@ public class Pacman extends JPanel implements ActionListener , KeyListener {
         pacmanRightImage = new ImageIcon(getClass().getResource("./pacmanRight.png")).getImage();
 
         loadMap();
+        for(Block ghost : ghosts){
+            char newDirection = directions[random.nextInt(4)];
+            ghost.updateDirection(newDirection);
+        }
         //how long it takes to start the timer , milliseconds gone between the frames
         gameLoop = new Timer(50 , this); // 20fps (1000/50)
         gameLoop.start();
@@ -205,11 +212,28 @@ public class Pacman extends JPanel implements ActionListener , KeyListener {
     public void move(){
         pacman.x += pacman.velocityX;
         pacman.y += pacman.velocityY;
-
+        //check for wall collision
         for(Block wall : walls){
             if(collision(pacman , wall)){
                 pacman.x -= pacman.velocityX;
                 pacman.y -= pacman.velocityY;
+            }
+        }
+
+        for(Block ghost : ghosts){
+            if(ghost.y == tileSize * 9 && ghost.direction != 'U' && ghost.direction != 'D'){
+                ghost.updateDirection('U');
+            }
+            ghost.x += ghost.velocityX;
+            ghost.y += ghost.velocityY;
+            //check for ghost collision
+            for(Block wall : walls){
+                if(collision(wall , ghost) || ghost.x <= 0 || ghost.x + ghost.width >= boardWidth){
+                    ghost.x -= ghost.velocityX;
+                    ghost.y -= ghost.velocityY;
+                    char newDirection = directions[random.nextInt(4)];
+                    ghost.updateDirection(newDirection);
+                }
             }
         }
     }
@@ -246,6 +270,18 @@ public class Pacman extends JPanel implements ActionListener , KeyListener {
         }
         else if(e.getKeyCode() == KeyEvent.VK_RIGHT){
             pacman.updateDirection('R');
+        }
+        if(pacman.direction == 'U'){
+            pacman.image = pacmanUpImage;
+        }
+        else if(pacman.direction == 'D'){
+            pacman.image = pacmanDownImage;
+        }
+        else if(pacman.direction == 'L'){
+            pacman.image = pacmanLeftImage;
+        }
+        else if(pacman.direction == 'R'){
+            pacman.image = pacmanRightImage;
         }
     }
 
